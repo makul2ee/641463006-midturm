@@ -1,45 +1,54 @@
 package main
 
 import (
-    "bufio"
-    "fmt"
-    "net"
-    "os"
-    "strings"
+	"bufio"
+	"fmt"
+	"net"
+	"os"
+	"strings"
 )
 
 func main() {
-    // เชื่อมต่อไปยัง server ที่ localhost port 8080
-    conn, err := net.Dial("tcp", "localhost:5000")
-    if err != nil {
-        panic(err)
-    }
-    defer conn.Close()
+	fmt.Println("Simple Chat Client")
 
-    // รับข้อมูล username จากผู้ใช้
-    fmt.Print("Enter username: ")
-    username := readInput()
-    // รับข้อมูล password จากผู้ใช้
-    fmt.Print("Enter password: ")
-    password := readInput()
+	// ป้อน username และ password
+	fmt.Print("Connecting to server...\n")
+	fmt.Print("Enter username: ")
+	username, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 
-    // ส่ง username และ password ไปยัง server
-    fmt.Fprintln(conn, username)
-    fmt.Fprintln(conn, password)
+	fmt.Print("Enter password: ")
+	password, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 
-    // รอคำตอบจาก server
-    response, err := bufio.NewReader(conn).ReadString('\n')
-    if err != nil {
-        panic(err)
-    }
+	// ตัดช่องว่างและขึ้นบรรทัดใหม่ที่เพิ่มเข้ามาจากการใช้ ReadString
+	username = strings.TrimSpace(username)
+	password = strings.TrimSpace(password)
 
-    // แสดงคำตอบจาก server
-    fmt.Print("Server response: " + response)
-}
+	// สร้างข้อมูลที่จะส่งไปยัง Server
+	data := fmt.Sprintf("%s:%s", username, password)
 
-// ฟังก์ชันในการอ่านข้อมูลจาก command line
-func readInput() string {
-    reader := bufio.NewReader(os.Stdin)
-    input, _ := reader.ReadString('\n')
-    return strings.TrimSpace(input)
+	// เชื่อมต่อกับ Server
+	conn, err := net.Dial("tcp", "localhost:5000")
+	if err != nil {
+		fmt.Println("Error connecting to server:", err)
+		return
+	}
+	defer conn.Close()
+
+	// ส่งข้อมูลไปยัง Server
+	_, err = conn.Write([]byte(data))
+	if err != nil {
+		fmt.Println("Error sending data to server:", err)
+		return
+	}
+
+	// รับข้อมูลจาก Server
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
+	if err != nil {
+		fmt.Println("Error receiving data from server:", err)
+		return
+	}
+
+	// แสดงผลลัพธ์ที่ได้จาก Server
+	fmt.Println("Server response:", string(buffer[:n]))
 }

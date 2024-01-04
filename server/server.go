@@ -1,54 +1,57 @@
 package main
 
 import (
-    "bufio"
-    "fmt"
-    "net"
-    "strings"
+	"fmt"
+	"net"
 )
 
-func main() {
-    // แสดงข้อความเริ่มต้น server
-    fmt.Println("Starting server...")
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
 
-    // เปิดการเชื่อมต่อใน port 8080
-    ln, err := net.Listen("tcp", ":5000")
-    if err != nil {
-        panic(err)
-    }
-    defer ln.Close()
+	// กำหนด username และ password
+	validUsername := "std1"
+	validPassword := "p@ssw0rd"
 
-    // ลูปรับการเชื่อมต่อจาก client
-    for {
-        conn, err := ln.Accept()
-        if err != nil {
-            fmt.Println(err)
-            continue
-        }
+	// รับข้อมูลจาก Client
+	buffer := make([]byte, 1024)
+	n, err := conn.Read(buffer)
+	if err != nil {
+		fmt.Println("Error reading:", err)
+		return
+	}
 
-        // จัดการการเชื่อมต่อแต่ละครั้งใน goroutine แยกต่างหาก
-        go handleConnection(conn)
-    }
+	clientData := string(buffer[:n])
+
+	// ตรวจสอบข้อมูล
+	if clientData == fmt.Sprintf("%s:%s", validUsername, validPassword) {
+		// ถ้าถูกต้อง
+		conn.Write([]byte("Hello\n"))
+	} else {
+		// ถ้าไม่ถูกต้อง
+		conn.Write([]byte("Invalid credentials\n"))
+	}
 }
 
-// ฟังก์ชันในการจัดการการเชื่อมต่อ
-func handleConnection(conn net.Conn) {
-    // ปิดการเชื่อมต่อเมื่อจบการทำงาน
-    defer conn.Close()
+func main() {
+	fmt.Println("Server is starting...")
 
-    // อ่านข้อมูลจาก client
-    reader := bufio.NewReader(conn)
-    username, _ := reader.ReadString('\n')
-    password, _ := reader.ReadString('\n')
+	// เปิด port 12345 เพื่อรองรับการเชื่อมต่อ
+	ln, err := net.Listen("tcp", ":5000")
+	if err != nil {
+		fmt.Println("Error listening:", err)
+		return
+	}
+	defer ln.Close()
 
-    // ตัดช่องว่างออกจาก username และ password
-    username = strings.TrimSpace(username)
-    password = strings.TrimSpace(password)
+	for {
+		// รอรับการเชื่อมต่อจาก Client
+		conn, err := ln.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection:", err)
+			continue
+		}
 
-    // ตรวจสอบข้อมูลว่าตรงกับที่กำหนดหรือไม่
-    if username == "std1" && password == "p@ssw0rd" {
-        conn.Write([]byte("Hello\n")) // ถ้าถูกต้อง ส่งคำตอบกลับไปว่า "Hello"
-    } else {
-        conn.Write([]byte("Invalid credentials\n")) // ถ้าไม่ถูกต้อง ส่งคำตอบกลับไปว่า "Invalid credentials"
-    }
+		// เริ่มต้นการจัดการเชื่อมต่อ
+		go handleConnection(conn)
+	}
 }
