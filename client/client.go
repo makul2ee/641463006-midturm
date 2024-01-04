@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-    // เชื่อมต่อไปยัง server ที่ localhost port 5000
+    // เชื่อมต่อไปยัง server ที่ localhost port 8080
     conn, err := net.Dial("tcp", "localhost:5000")
     if err != nil {
         panic(err)

@@ -11,7 +11,7 @@ func main() {
     // แสดงข้อความเริ่มต้น server
     fmt.Println("Starting server...")
 
-    // เปิดการเชื่อมต่อใน port 5000
+    // เปิดการเชื่อมต่อใน port 8080
     ln, err := net.Listen("tcp", ":5000")
     if err != nil {
         panic(err)
